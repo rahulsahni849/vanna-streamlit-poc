@@ -11,6 +11,7 @@ from utils.vanna_calls import (
     generate_followup_cached,
 )
 
+
 st.set_page_config(layout="wide")
 setup_connexion()
 
@@ -56,8 +57,10 @@ if my_question:
     st.session_state["my_question"] = my_question
     user_message = st.chat_message("user")
     user_message.write(f"{my_question}")
-
+    print("========= My questions")
+    print(my_question)
     sql = generate_sql_cached(question=my_question)
+
 
     if sql:
         if st.session_state.get("show_sql", True):

@@ -1,25 +1,27 @@
 import os
 import streamlit as st
-import vanna as vn
+from vanna.remote import VannaDefault
 from dotenv import load_dotenv
-
+from utils.train import CustomTraining
+from utils.VN_Singleton import VannaSingleton
 
 @st.cache_resource(ttl=3600)
 def setup_connexion():
-    if "vanna_api_key" in st.secrets and "gcp_project_id" in st.secrets:
-        vn.set_api_key(st.secrets.get("vanna_api_key"))
-        vn.set_model("thelook")
-        vn.connect_to_bigquery(
-            project_id=st.secrets.get("gcp_project_id"),
-        )
-
-    else:
         load_dotenv()
-        vn.set_api_key(os.environ.get("VANNA_API_KEY"))
-        vn.set_model("thelook")
-        vn.connect_to_bigquery(
-            project_id=os.environ.get("GCP_PROJECT_ID"),
-        )
+        vn = VannaSingleton.getVN()
+        # vn = VannaDefault(model=os.environ.get("VANNA_MODEL"), api_key=os.environ.get("VANNA_API_KEY"))
+        
+        # # vn.connect_to_bigquery(
+        # #     project_id=os.environ.get("GCP_PROJECT_ID"),
+        # # )
+        # db_name = os.getenv("DB_NAME")
+        # db_username = os.getenv("DB_USERNAME")
+        # db_password = os.getenv("DB_PASSWORD")
+        # db_server = os.getenv("DB_SERVER")
+
+        # connection_string = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={db_server};DATABASE={db_name};UID={db_username};PWD={db_password}'
+        # vn.connect_to_mssql(odbc_conn_str=connection_string) # You can use the ODBC connection string here
+        # CustomTraining(vn)
 
 
 def setup_session_state():
