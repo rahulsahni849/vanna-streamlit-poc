@@ -1,3 +1,6 @@
+# def CustomTraining(vn):
+#     pass
+
 def CustomTraining(vn):
     # The information schema query may need some tweaking depending on your database. This is a good starting point.
     
@@ -172,4 +175,4 @@ def CustomTraining(vn):
     FROM [VannaPOCDB].[SalesLT].[Product]
             ''')
 
-    # ======================= Training
+# #     # ======================= Training
