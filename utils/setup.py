@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from vanna.remote import VannaDefault
 from dotenv import load_dotenv
-from utils.train import CustomTraining
+from utils.crc_train import CustomTraining
 from utils.VN_Singleton import VannaSingleton
 
 @st.cache_resource(ttl=3600)

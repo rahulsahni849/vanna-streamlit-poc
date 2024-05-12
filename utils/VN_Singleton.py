@@ -1,7 +1,7 @@
 import os
 from vanna.remote import VannaDefault
 from dotenv import load_dotenv
-from utils.train import CustomTraining
+from utils.crc_train import CustomTraining
 
 class VannaSingleton:
     _instance = None
@@ -21,8 +21,10 @@ class VannaSingleton:
         db_username = os.getenv("DB_USERNAME")
         db_password = os.getenv("DB_PASSWORD")
         db_server = os.getenv("DB_SERVER")
-
-        connection_string = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={db_server};DATABASE={db_name};UID={db_username};PWD={db_password}'
+        db_port = os.getenv("DB_PORT")
+    
+        connection_string = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={db_server},{db_port};DATABASE={db_name};UID={db_username};PWD={db_password}'
+        print(connection_string)
         vn.connect_to_mssql(odbc_conn_str=connection_string)
         VannaSingleton._vn = vn
         CustomTraining(vn)

@@ -11,6 +11,26 @@ from utils.vanna_calls import (
 )
 from utils.UserChat import UserChat,UserChatList
 
+def set_question(question):
+    st.session_state["my_question"] = question
+    if question not in get_last_asked_questions():
+        set_questions_list(question)
+    
+def get_last_asked_questions():
+    if("last_asked_my_questions" in st.session_state):
+        return st.session_state["last_asked_my_questions"]
+    else:
+        return ""
+    
+def set_questions_list(question):
+    if("last_asked_my_questions" not in st.session_state):
+        st.session_state.last_asked_my_questions = [question]
+        
+    else:
+        st.session_state["last_asked_my_questions"].append(question)
+    
+
+
 
 st.set_page_config(layout="wide")
 setup_connexion()
@@ -21,15 +41,12 @@ st.sidebar.checkbox("Show Table", value=True, key="show_table")
 # st.sidebar.button("Rerun", on_click=setup_session_state, use_container_width=True)
 
 st.title("CRC AI SQL SERVICE")
-st.sidebar.write(st.session_state)
-    
+# st.sidebar.write(st.session_state)
 
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history= UserChatList()
 
 
-def set_question(question):
-    st.session_state["my_question"] = question
 
 
 assistant_message_suggested = st.chat_message(
@@ -49,10 +66,10 @@ if assistant_message_suggested.button("Click to show suggested questions"):
 
 def ChatWithVanna(my_question):
     
-    
     if my_question:
         current_chat = UserChat()
         st.session_state["my_question"] = my_question
+        set_question(my_question)
         user_message = st.chat_message("user")
         
         if st.session_state.get("my_question") is not None:
@@ -109,6 +126,7 @@ def ChatWithVanna(my_question):
             )
             assistant_message_error.error("I wasn't able to generate SQL for that question")
         st.session_state.chat_history.AddHistory(current_chat)
+    # get_last_asked_questions
     st.session_state["my_question"]= None
     
     
@@ -119,45 +137,29 @@ def CreatingChatHistory(chat_session_object):
     if not chat_history:  # If chat_history is empty, return
         return
     
-    user_message = st.chat_message("user")
-    assistant_message_sql = st.chat_message(
-                    "assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png"
-                )
-    assistant_message_table = st.chat_message(
-            "assistant",
-            avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
-        )
-    assistant_message_chart = st.chat_message(
-            "assistant",
-            avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
-        )
-    
     for chat in chat_history:
-        
-        # Rendering user questions
         if chat.user_question:
-            user_message.write(f"{chat.user_question}")
+            st.markdown(f"<b>User:</b> {chat.user_question}", unsafe_allow_html=True)
         
-        # Rendering answered sql
         if chat.sql:
-            assistant_message_sql.code(chat.sql, language="sql", line_numbers=True)
+            st.markdown("```sql\n{}\n```".format(chat.sql))
         
-        # Rendering answered sql result table
         if chat.sql_result is not None:
             df = chat.sql_result
             if len(df) > 10:
-                assistant_message_table.text("First 10 rows of data")
-                assistant_message_table.dataframe(df.head(10))
+                st.markdown("**First 10 rows of data:**")
+                st.dataframe(df.head(10))
             else:
-                assistant_message_table.dataframe(df)
+                st.markdown("**Data:**")
+                st.dataframe(df)
         
-        # Rendering answered sql result chart
         if chat.plot_code:
             fig = generate_plot_cached(code=chat.plot_code, df=df)
             if fig is not None:
-                assistant_message_chart.plotly_chart(fig)
+                st.markdown("**Chart:**")
+                st.plotly_chart(fig)
             else:
-                assistant_message_chart.error("I couldn't generate a chart")
+                st.error("I couldn't generate a chart")
 
 def main():
     
@@ -170,6 +172,10 @@ def main():
     
     CreatingChatHistory(st.session_state.chat_history)
     ChatWithVanna(my_question)
+    
+    st.sidebar.title("Previously Asked Questions")
+    for i in get_last_asked_questions():
+        st.sidebar.write("- " + i)
 
 if __name__=='__main__':
     main()    
