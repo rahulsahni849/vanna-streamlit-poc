@@ -139,27 +139,31 @@ def CreatingChatHistory(chat_session_object):
     
     for chat in chat_history:
         if chat.user_question:
-            st.markdown(f"<b>User:</b> {chat.user_question}", unsafe_allow_html=True)
+            user_message = st.chat_message("user")
+            user_message.write(chat.user_question)
         
         if chat.sql:
-            st.markdown("```sql\n{}\n```".format(chat.sql))
+            assistant_message_sql = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+            assistant_message_sql.code(chat.sql, language="sql", line_numbers=True)
         
         if chat.sql_result is not None:
             df = chat.sql_result
             if len(df) > 10:
-                st.markdown("**First 10 rows of data:**")
-                st.dataframe(df.head(10))
+                assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                assistant_message_table.text("First 10 rows of data")
+                assistant_message_table.dataframe(df.head(10))
             else:
-                st.markdown("**Data:**")
-                st.dataframe(df)
+                assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                assistant_message_table.dataframe(df)
         
         if chat.plot_code:
             fig = generate_plot_cached(code=chat.plot_code, df=df)
             if fig is not None:
-                st.markdown("**Chart:**")
-                st.plotly_chart(fig)
+                assistant_message_chart = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                assistant_message_chart.plotly_chart(fig)
             else:
-                st.error("I couldn't generate a chart")
+                assistant_message_error = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                assistant_message_error.error("I couldn't generate a chart")
 
 def main():
     
