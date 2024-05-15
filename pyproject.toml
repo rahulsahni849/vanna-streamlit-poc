@@ -15,6 +15,7 @@ db-dtypes = "^1.1.1"
 streamlit-code-editor = "^0.1.10"
 pyodbc = "*"  # Add this line for pyodbc support
 vanna = "^0.4.3"
+pymongo = "^4.7.2"
 
 
 [tool.poetry.group.dev.dependencies]

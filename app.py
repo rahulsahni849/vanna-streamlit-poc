@@ -35,12 +35,29 @@ def set_questions_list(question):
 st.set_page_config(layout="wide")
 setup_connexion()
 
+# Set up layout for the logo to be in the top-left corner of the sidebar
+st.markdown(
+    """
+    <style>
+        .sidebar .logo-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Display the logo image in the sidebar
+st.sidebar.image("https://thewitslab.com/_next/static/media/header-logo.29455862.png?imwidth=828", width=100)
+
 st.sidebar.title("Output Settings")
 st.sidebar.checkbox("Show SQL", value=True, key="show_sql")
 st.sidebar.checkbox("Show Table", value=True, key="show_table")
 # st.sidebar.button("Rerun", on_click=setup_session_state, use_container_width=True)
 
-st.title("CRC AI SQL SERVICE")
+st.title("WIL AI SQL SERVER")
 # st.sidebar.write(st.session_state)
 
 if 'chat_history' not in st.session_state:
