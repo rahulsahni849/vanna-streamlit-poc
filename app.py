@@ -10,6 +10,13 @@ from utils.vanna_calls import (
     generate_plot_cached,
 )
 from utils.UserChat import UserChat,UserChatList
+from utils.mongoUtils import MongoDBService
+
+#---------------- Mongo connection
+
+mongo_service = MongoDBService()
+
+#---------------- Mongo connection
 
 def set_question(question):
     st.session_state["my_question"] = question
@@ -22,6 +29,13 @@ def get_last_asked_questions():
     else:
         return ""
     
+def get_all_asked_questions():
+    if("user_question" in st.session_state):
+        return st.session_state["user_question"]
+    else:
+        return ""
+    
+    
 def set_questions_list(question):
     if("last_asked_my_questions" not in st.session_state):
         st.session_state.last_asked_my_questions = [question]
@@ -29,8 +43,6 @@ def set_questions_list(question):
     else:
         st.session_state["last_asked_my_questions"].append(question)
     
-
-
 
 st.set_page_config(layout="wide")
 setup_connexion()
@@ -55,6 +67,7 @@ st.sidebar.image("https://thewitslab.com/_next/static/media/header-logo.29455862
 st.sidebar.title("Output Settings")
 st.sidebar.checkbox("Show SQL", value=True, key="show_sql")
 st.sidebar.checkbox("Show Table", value=True, key="show_table")
+st.sidebar.checkbox("Show Chart", value=True, key="show_plot")
 # st.sidebar.button("Rerun", on_click=setup_session_state, use_container_width=True)
 
 st.title("WIL AI SQL SERVER")
@@ -142,6 +155,8 @@ def ChatWithVanna(my_question):
                 "assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png"
             )
             assistant_message_error.error("I wasn't able to generate SQL for that question")
+        
+        mongo_service.store_chat_history(current_chat)
         st.session_state.chat_history.AddHistory(current_chat)
     # get_last_asked_questions
     st.session_state["my_question"]= None
@@ -149,31 +164,44 @@ def ChatWithVanna(my_question):
     
 
 def CreatingChatHistory(chat_session_object):
-    chat_history = chat_session_object.chat_history
+    # Retrieve chat history from the last hour
+    chat_history_last_hour = mongo_service.retrieve_chat_history_last_hour()
+    # for chat in chat_history_last_hour:
+    #     print(chat)
+    chat_history = mongo_service.deserialize_user_chat_list(chat_history_last_hour)
+    st.session_state.chat_history = chat_history
+    print(st.session_state.chat_history)
+    
+    st.sidebar.title("Previously Asked Questions")
+    for i in st.session_state.chat_history.chat_history:
+        st.sidebar.write("- " + i.user_question)
+    # chat_history = chat_session_object.chat_history
+    # chat_history = UserChatList()
     
     if not chat_history:  # If chat_history is empty, return
         return
     
-    for chat in chat_history:
+    for chat in chat_history.chat_history:
         if chat.user_question:
             user_message = st.chat_message("user")
             user_message.write(chat.user_question)
         
-        if chat.sql:
+        if chat.sql and st.session_state.get("show_sql", True):
             assistant_message_sql = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
             assistant_message_sql.code(chat.sql, language="sql", line_numbers=True)
         
         if chat.sql_result is not None:
             df = chat.sql_result
-            if len(df) > 10:
-                assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
-                assistant_message_table.text("First 10 rows of data")
-                assistant_message_table.dataframe(df.head(10))
-            else:
-                assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
-                assistant_message_table.dataframe(df)
+            if(st.session_state.get("show_table", True)):
+                if len(df) > 10:
+                    assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                    assistant_message_table.text("First 10 rows of data")
+                    assistant_message_table.dataframe(df.head(10))
+                else:
+                    assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                    assistant_message_table.dataframe(df)
         
-        if chat.plot_code:
+        if chat.plot_code and st.session_state.get("show_plot", True):
             fig = generate_plot_cached(code=chat.plot_code, df=df)
             if fig is not None:
                 assistant_message_chart = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
@@ -194,9 +222,12 @@ def main():
     CreatingChatHistory(st.session_state.chat_history)
     ChatWithVanna(my_question)
     
-    st.sidebar.title("Previously Asked Questions")
+    
     for i in get_last_asked_questions():
         st.sidebar.write("- " + i)
+        
+    # Close MongoDB connection when done
+    # mongo_service.close_connection()
 
 if __name__=='__main__':
     main()    
