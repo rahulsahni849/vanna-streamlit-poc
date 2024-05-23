@@ -8,31 +8,162 @@ from utils.vanna_calls import (
     run_sql_cached,
     generate_plotly_code_cached,
     generate_plot_cached,
-    generate_followup_cached,
 )
+from utils.UserChat import UserChat,UserChatList
+from utils.mongoUtils import MongoDBService
+
+#---------------- Mongo connection
+
+mongo_service = MongoDBService()
+
+#---------------- Mongo connection
+
+def set_question(question):
+    st.session_state["my_question"] = question
+    if question not in get_last_asked_questions():
+        set_questions_list(question)
+    
+def get_last_asked_questions():
+    if("last_asked_my_questions" in st.session_state):
+        return st.session_state["last_asked_my_questions"]
+    else:
+        return ""
+    
+def get_all_asked_questions():
+    if("user_question" in st.session_state):
+        return st.session_state["user_question"]
+    else:
+        return ""
+    
+    
+def set_questions_list(question):
+    if("last_asked_my_questions" not in st.session_state):
+        st.session_state.last_asked_my_questions = [question]
+        
+    else:
+        st.session_state["last_asked_my_questions"].append(question)
+    
 
 st.set_page_config(layout="wide")
 setup_connexion()
 
+# Set up layout for the logo to be in the top-left corner of the sidebar
+# st.markdown(
+#     """
+#     <style>
+#         .sidebar .logo-container {
+#             position: absolute;
+#             top: -50px;
+#             left: 10px;
+#         }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
+
+# Display the logo image in the sidebar
+st.sidebar.image("https://thewitslab.com/_next/static/media/header-logo.29455862.png?imwidth=828", width=100)
+# st.sidebar.image("https://thewitslab.com/_next/static/media/header-logo.29455862.png?imwidth=828", width=100)
+
 st.sidebar.title("Output Settings")
 st.sidebar.checkbox("Show SQL", value=True, key="show_sql")
 st.sidebar.checkbox("Show Table", value=True, key="show_table")
-st.sidebar.checkbox("Show Plotly Code", value=True, key="show_plotly_code")
-st.sidebar.checkbox("Show Chart", value=True, key="show_chart")
-st.sidebar.checkbox("Show Follow-up Questions", value=True, key="show_followup")
-st.sidebar.button("Rerun", on_click=setup_session_state, use_container_width=True)
+st.sidebar.checkbox("Show Chart", value=True, key="show_plot")
+# st.sidebar.button("Rerun", on_click=setup_session_state, use_container_width=True)
 
-st.title("Vanna AI")
-st.sidebar.write(st.session_state)
+# st.title("WIL AI SQL SERVER")
+# st.sidebar.write(st.session_state)
+
+# st.markdown(
+#     """
+#     <style>
+#     .center {
+#         display: flex;
+#         justify-content: flex-start;
+#         align-items: flex-start;
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
+
+# # Display the logo
+# st.markdown(
+#     """
+#     <div class="center">
+#         <img src="https://cmta.net/wp-content/uploads/california-resources-corporation-logo.jpg" alt="Logo" width="200">
+#     </div>
+#     """,
+#      unsafe_allow_html=True,
+# )
 
 
-def set_question(question):
-    st.session_state["my_question"] = question
+# if 'chat_history' not in st.session_state:
+#     st.session_state.chat_history= UserChatList()
 
 
-assistant_message_suggested = st.chat_message(
-    "assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png"
-)
+# assistant_message_suggested = st.chat_message(
+#     "assistant", avatar="https://harrt.ucla.edu/wp-content/uploads/2023/05/CaliforniaResourcesCorporation.png"
+# )
+
+
+# # st.markdown(
+# #     """
+# #     <style>
+# #         .custom {
+# #             position: absolute;
+# #             top: 50px;
+# #             left: 10px;
+# #             height: 5vh;
+# #         }
+# #     </style>
+# #     """,
+# #     unsafe_allow_html=True,
+# # )
+# # # Display the logo
+# # st.markdown(
+# #     """
+# #     <div class="custom">
+        
+# #     </div>
+# #     """,
+# #      unsafe_allow_html=True,
+# # )
+
+# if assistant_message_suggested.button("Click to show suggested questions"):
+#     st.session_state["my_question"] = None
+#     questions = generate_questions_cached()
+#     for i, question in enumerate(questions):
+#         time.sleep(0.05)
+#         button = st.button(
+#             question,
+#             on_click=set_question,
+#             args=(question,),
+#         )
+
+# Display the logo and the button side by side
+col1, col2 = st.columns([1, 2])  # Adjust the ratio to your preference
+
+# Left column for the logo
+with col1:
+    st.markdown(
+        """
+        <div class="center">
+            <img src="https://cmta.net/wp-content/uploads/california-resources-corporation-logo.jpg" alt="Logo" width="200">
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# Right column for the button
+with col2:
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []  # Replace with UserChatList() if it's defined
+
+    assistant_message_suggested = st.chat_message(
+        "assistant"
+    )
+
 if assistant_message_suggested.button("Click to show suggested questions"):
     st.session_state["my_question"] = None
     questions = generate_questions_cached()
@@ -43,136 +174,142 @@ if assistant_message_suggested.button("Click to show suggested questions"):
             on_click=set_question,
             args=(question,),
         )
+    
 
-my_question = st.session_state.get("my_question", default=None)
+def ChatWithVanna(my_question):
+    
+    if my_question:
+        current_chat = UserChat()
+        st.session_state["my_question"] = my_question
+        set_question(my_question)
+        user_message = st.chat_message("user")
+        
+        if st.session_state.get("my_question") is not None:
+            current_chat.user_question= my_question
+        
+        user_message.write(f"{my_question}")
+        sql = generate_sql_cached(question=my_question)
+        
+        current_chat.sql = sql
+        
+        if sql:
+            if st.session_state.get("show_sql", True):
+                assistant_message_sql = st.chat_message(
+                    "assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png"
+                )
+                assistant_message_sql.code(sql, language="sql", line_numbers=True)
 
-if my_question is None:
-    my_question = st.chat_input(
-        "Ask me a question about your data",
-    )
+            df = run_sql_cached(sql=sql)
+            st.session_state["df"] = df
+            
+            current_chat.sql_result= df
+            
+            if st.session_state.get("df") is not None:
+                if st.session_state.get("show_table", True):
+                    df = st.session_state.get("df")
+                    assistant_message_table = st.chat_message(
+                        "assistant",
+                        avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
+                    )
+                    if len(df) > 10:
+                        assistant_message_table.text("First 10 rows of data")
+                        assistant_message_table.dataframe(df.head(10))
+                    else:
+                        assistant_message_table.dataframe(df)
 
+                code = generate_plotly_code_cached(question=my_question, sql=sql, df=df)
+                current_chat.plot_code=code
 
-if my_question:
-    st.session_state["my_question"] = my_question
-    user_message = st.chat_message("user")
-    user_message.write(f"{my_question}")
+                if code is not None and code != "":
+                    if st.session_state.get("show_chart", True):
+                        assistant_message_chart = st.chat_message(
+                            "assistant",
+                            avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
+                        )
+                        fig = generate_plot_cached(code=code, df=df)
+                        if fig is not None:
+                            assistant_message_chart.plotly_chart(fig)
+                        else:
+                            assistant_message_chart.error("I couldn't generate a chart")
 
-    sql = generate_sql_cached(question=my_question)
-
-    if sql:
-        if st.session_state.get("show_sql", True):
-            assistant_message_sql = st.chat_message(
+        else:
+            assistant_message_error = st.chat_message(
                 "assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png"
             )
-            assistant_message_sql.code(sql, language="sql", line_numbers=True)
+            assistant_message_error.error("I wasn't able to generate SQL for that question")
+        
+        mongo_service.store_chat_history(current_chat)
+        st.session_state.chat_history.AddHistory(current_chat)
+    # get_last_asked_questions
+    st.session_state["my_question"]= None
+    
+    
 
-        user_message_sql_check = st.chat_message("user")
-        user_message_sql_check.write(f"Are you happy with the generated SQL code?")
-        with user_message_sql_check:
-            happy_sql = st.radio(
-                "Happy",
-                options=["", "yes", "no"],
-                key="radio_sql",
-                index=0,
-            )
-
-        if happy_sql == "no":
-            st.warning(
-                "Please fix the generated SQL code. Once you're done hit Shift + Enter to submit"
-            )
-            sql_response = code_editor(sql, lang="sql")
-            fixed_sql_query = sql_response["text"]
-
-            if fixed_sql_query != "":
-                df = run_sql_cached(sql=fixed_sql_query)
-            else:
-                df = None
-        elif happy_sql == "yes":
-            df = run_sql_cached(sql=sql)
-        else:
-            df = None
-
-        if df is not None:
-            st.session_state["df"] = df
-
-        if st.session_state.get("df") is not None:
-            if st.session_state.get("show_table", True):
-                df = st.session_state.get("df")
-                assistant_message_table = st.chat_message(
-                    "assistant",
-                    avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
-                )
+def CreatingChatHistory(chat_session_object):
+    # Retrieve chat history from the last hour
+    chat_history_last_hour = mongo_service.retrieve_chat_history_last_hour()
+    # for chat in chat_history_last_hour:
+    #     print(chat)
+    chat_history = mongo_service.deserialize_user_chat_list(chat_history_last_hour)
+    st.session_state.chat_history = chat_history
+    # print(st.session_state.chat_history)
+    
+    st.sidebar.title("Previously Asked Questions")
+    for i in st.session_state.chat_history.chat_history:
+        st.sidebar.write("- " + i.user_question)
+    # chat_history = chat_session_object.chat_history
+    # chat_history = UserChatList()
+    
+    if not chat_history:  # If chat_history is empty, return
+        return
+    
+    for chat in chat_history.chat_history:
+        if chat.user_question:
+            user_message = st.chat_message("user")
+            user_message.write(chat.user_question)
+        
+        if chat.sql and st.session_state.get("show_sql", True):
+            assistant_message_sql = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+            assistant_message_sql.code(chat.sql, language="sql", line_numbers=True)
+        
+        if chat.sql_result is not None:
+            df = chat.sql_result
+            if(st.session_state.get("show_table", True)):
                 if len(df) > 10:
+                    assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
                     assistant_message_table.text("First 10 rows of data")
                     assistant_message_table.dataframe(df.head(10))
                 else:
+                    assistant_message_table = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
                     assistant_message_table.dataframe(df)
+        
+        if chat.plot_code and st.session_state.get("show_plot", True):
+            fig = generate_plot_cached(code=chat.plot_code, df=df)
+            if fig is not None:
+                assistant_message_chart = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                assistant_message_chart.plotly_chart(fig)
+            else:
+                assistant_message_error = st.chat_message("assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png")
+                assistant_message_error.error("I couldn't generate a chart")
 
-            code = generate_plotly_code_cached(question=my_question, sql=sql, df=df)
-
-            if st.session_state.get("show_plotly_code", False):
-                assistant_message_plotly_code = st.chat_message(
-                    "assistant",
-                    avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
-                )
-                assistant_message_plotly_code.code(
-                    code, language="python", line_numbers=True
-                )
-
-            user_message_plotly_check = st.chat_message("user")
-            user_message_plotly_check.write(
-                f"Are you happy with the generated Plotly code?"
-            )
-            with user_message_plotly_check:
-                happy_plotly = st.radio(
-                    "Happy",
-                    options=["", "yes", "no"],
-                    key="radio_plotly",
-                    index=0,
-                )
-
-            if happy_plotly == "no":
-                st.warning(
-                    "Please fix the generated Python code. Once you're done hit Shift + Enter to submit"
-                )
-                python_code_response = code_editor(code, lang="python")
-                code = python_code_response["text"]
-            elif happy_plotly == "":
-                code = None
-
-            if code is not None and code != "":
-                if st.session_state.get("show_chart", True):
-                    assistant_message_chart = st.chat_message(
-                        "assistant",
-                        avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
-                    )
-                    fig = generate_plot_cached(code=code, df=df)
-                    if fig is not None:
-                        assistant_message_chart.plotly_chart(fig)
-                    else:
-                        assistant_message_chart.error("I couldn't generate a chart")
-
-                if st.session_state.get("show_followup", True):
-                    assistant_message_followup = st.chat_message(
-                        "assistant",
-                        avatar="https://ask.vanna.ai/static/img/vanna_circle.png",
-                    )
-                    followup_questions = generate_followup_cached(
-                        question=my_question, df=df
-                    )
-                    st.session_state["df"] = None
-
-                    if len(followup_questions) > 0:
-                        assistant_message_followup.text(
-                            "Here are some possible follow-up questions"
-                        )
-                        # Print the first 5 follow-up questions
-                        for question in followup_questions[:5]:
-                            time.sleep(0.05)
-                            assistant_message_followup.write(question)
-
-    else:
-        assistant_message_error = st.chat_message(
-            "assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png"
+def main():
+    
+    my_question = st.session_state.get("my_question", default=None)
+    
+    if my_question is None:
+        my_question = st.chat_input(
+            "Ask me a question about your data",
         )
-        assistant_message_error.error("I wasn't able to generate SQL for that question")
+    
+    CreatingChatHistory(st.session_state.chat_history)
+    ChatWithVanna(my_question)
+    
+    
+    for i in get_last_asked_questions():
+        st.sidebar.write("- " + i)
+        
+    # Close MongoDB connection when done
+    # mongo_service.close_connection()
+
+if __name__=='__main__':
+    main()    
