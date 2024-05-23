@@ -48,21 +48,22 @@ st.set_page_config(layout="wide")
 setup_connexion()
 
 # Set up layout for the logo to be in the top-left corner of the sidebar
-st.markdown(
-    """
-    <style>
-        .sidebar .logo-container {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# st.markdown(
+#     """
+#     <style>
+#         .sidebar .logo-container {
+#             position: absolute;
+#             top: -50px;
+#             left: 10px;
+#         }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
 
 # Display the logo image in the sidebar
 st.sidebar.image("https://thewitslab.com/_next/static/media/header-logo.29455862.png?imwidth=828", width=100)
+# st.sidebar.image("https://thewitslab.com/_next/static/media/header-logo.29455862.png?imwidth=828", width=100)
 
 st.sidebar.title("Output Settings")
 st.sidebar.checkbox("Show SQL", value=True, key="show_sql")
@@ -70,18 +71,99 @@ st.sidebar.checkbox("Show Table", value=True, key="show_table")
 st.sidebar.checkbox("Show Chart", value=True, key="show_plot")
 # st.sidebar.button("Rerun", on_click=setup_session_state, use_container_width=True)
 
-st.title("WIL AI SQL SERVER")
+# st.title("WIL AI SQL SERVER")
 # st.sidebar.write(st.session_state)
 
-if 'chat_history' not in st.session_state:
-    st.session_state.chat_history= UserChatList()
+# st.markdown(
+#     """
+#     <style>
+#     .center {
+#         display: flex;
+#         justify-content: flex-start;
+#         align-items: flex-start;
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
+
+# # Display the logo
+# st.markdown(
+#     """
+#     <div class="center">
+#         <img src="https://cmta.net/wp-content/uploads/california-resources-corporation-logo.jpg" alt="Logo" width="200">
+#     </div>
+#     """,
+#      unsafe_allow_html=True,
+# )
 
 
+# if 'chat_history' not in st.session_state:
+#     st.session_state.chat_history= UserChatList()
 
 
-assistant_message_suggested = st.chat_message(
-    "assistant", avatar="https://ask.vanna.ai/static/img/vanna_circle.png"
-)
+# assistant_message_suggested = st.chat_message(
+#     "assistant", avatar="https://harrt.ucla.edu/wp-content/uploads/2023/05/CaliforniaResourcesCorporation.png"
+# )
+
+
+# # st.markdown(
+# #     """
+# #     <style>
+# #         .custom {
+# #             position: absolute;
+# #             top: 50px;
+# #             left: 10px;
+# #             height: 5vh;
+# #         }
+# #     </style>
+# #     """,
+# #     unsafe_allow_html=True,
+# # )
+# # # Display the logo
+# # st.markdown(
+# #     """
+# #     <div class="custom">
+        
+# #     </div>
+# #     """,
+# #      unsafe_allow_html=True,
+# # )
+
+# if assistant_message_suggested.button("Click to show suggested questions"):
+#     st.session_state["my_question"] = None
+#     questions = generate_questions_cached()
+#     for i, question in enumerate(questions):
+#         time.sleep(0.05)
+#         button = st.button(
+#             question,
+#             on_click=set_question,
+#             args=(question,),
+#         )
+
+# Display the logo and the button side by side
+col1, col2 = st.columns([1, 2])  # Adjust the ratio to your preference
+
+# Left column for the logo
+with col1:
+    st.markdown(
+        """
+        <div class="center">
+            <img src="https://cmta.net/wp-content/uploads/california-resources-corporation-logo.jpg" alt="Logo" width="200">
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# Right column for the button
+with col2:
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []  # Replace with UserChatList() if it's defined
+
+    assistant_message_suggested = st.chat_message(
+        "assistant"
+    )
+
 if assistant_message_suggested.button("Click to show suggested questions"):
     st.session_state["my_question"] = None
     questions = generate_questions_cached()
@@ -92,7 +174,7 @@ if assistant_message_suggested.button("Click to show suggested questions"):
             on_click=set_question,
             args=(question,),
         )
-
+    
 
 def ChatWithVanna(my_question):
     
@@ -170,7 +252,7 @@ def CreatingChatHistory(chat_session_object):
     #     print(chat)
     chat_history = mongo_service.deserialize_user_chat_list(chat_history_last_hour)
     st.session_state.chat_history = chat_history
-    print(st.session_state.chat_history)
+    # print(st.session_state.chat_history)
     
     st.sidebar.title("Previously Asked Questions")
     for i in st.session_state.chat_history.chat_history:
